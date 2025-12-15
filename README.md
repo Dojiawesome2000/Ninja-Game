@@ -1,3 +1,1 @@
-**Ninja Game**
-
-Public Repo for my version of DaFluffyPotato's Pygame Pltformer Tutorial
+This project is based off a ninja platformer game in a tutorial made by dafluffypotato
