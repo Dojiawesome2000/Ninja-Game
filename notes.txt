@@ -1,0 +1,21 @@
+Notes:
+- For pygame coordinate system, (0,0) is at TOP LEFT of screen
+- Layering of images is based entirely on the order you place them on a surface
+
+
+
+
+- For creation of pygame:
+    - Init pygame
+    - Create screen
+    - Create clock/timer for frame rate
+    - Create game loop:
+        - update imgs/surfaces
+        - other logic (e.g. update assets, update phsyics entities)
+        - Detect exit key
+        - Detect other keybinds
+
+        - update screen
+        - update clock
+    - (ensure game loop is instantiated)
+    - 
