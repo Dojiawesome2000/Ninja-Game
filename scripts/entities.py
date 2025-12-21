@@ -175,6 +175,8 @@ class Enemy(PhysicsEntity):
 class Boss(Enemy):
     def __init__(self, game, pos, size):
         super().__init__(game, pos, size, e_type='boss', max_hp=500, dmg=10)
+
+        self.anim_offset = (-5, -5)
         
     def update(self, tilemap, movement=(0, 0)):
         # # only same mvmt as enemy for now

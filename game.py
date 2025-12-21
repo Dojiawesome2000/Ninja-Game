@@ -44,7 +44,7 @@ class Game:
             'player/run': Animation(load_images('entities/player/run'), img_dur=4),
             'player/slide': Animation(load_images('entities/player/slide')),
             'player/wall_slide': Animation(load_images('entities/player/wall_slide')),
-            'boss/idle':Animation(load_images('entities/boss/idle')),
+            'boss/idle':Animation(load_images('entities/boss/idle'), img_dur=6),
             'boss/run':Animation(load_images('entities/boss/run')),
             'boss/jump':Animation(load_images('entities/boss/jump')),
             'boss/slash':Animation(load_images('entities/boss/slash')),
@@ -94,7 +94,7 @@ class Game:
 
         self.map_name = 'test3.json' # or map.json
         # self.map_id = 0
-        self.testing = True
+        self.testing = False
 
         self.level = 0 if not self.testing else self.map_name
         try:
