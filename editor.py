@@ -34,7 +34,7 @@ class Editor:
         self.movement = [False, False, False, False]
         
         self.tilemap = Tilemap(self, tile_size=16)
-        self.tilemap.load('map.json') # default is: 'map.json'
+        self.tilemap.load('test3.json') # default is: 'map.json'
 
         # try:
         #     self.tilemap.load("map.json")
@@ -65,7 +65,7 @@ class Editor:
             # Set up camera offset (render_scroll)
             render_scroll = (int(self.scroll[0]), int(self.scroll[1]))
 
-            # Render TileMap 
+            # Render TileMap
             self.tilemap.render(self.display, offset=render_scroll)
 
             # Get current/active tile
@@ -79,7 +79,10 @@ class Editor:
 
             # Display placing position in real time
             if self.on_grid:
-                self.display.blit(current_tile_img, (tile_pos[0] * self.tilemap.tile_size - self.scroll[0], tile_pos[1] * self.tilemap.tile_size - self.scroll[1]))
+                if self.tile_group == 4 and self.tile_variant == 2: # if displaying boss
+                    self.display.blit(current_tile_img, (tile_pos[0] * self.tilemap.tile_size - self.scroll[0] - 3, tile_pos[1] * self.tilemap.tile_size - self.scroll[1] - 4))
+                else:
+                    self.display.blit(current_tile_img, (tile_pos[0] * self.tilemap.tile_size - self.scroll[0], tile_pos[1] * self.tilemap.tile_size - self.scroll[1]))
             else:
                 self.display.blit(current_tile_img, mpos)
 
@@ -100,7 +103,7 @@ class Editor:
                         self.tilemap.offgrid_tiles.remove(tile)
 
 
-            # Display img
+            # Display img (preview of current tile being placed in top left corner)
             self.display.blit(current_tile_img, (5, 5))
         
             ## User Input

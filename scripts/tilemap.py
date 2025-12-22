@@ -159,10 +159,14 @@ class Tilemap:
                 loc = str(x) + ';' + str(y)
                 if loc in self.tilemap:
                     tile = self.tilemap[loc]
-                    if tile['type'] == 'spawners':
-                        pass
+                    # if tile['type'] == 'spawners':
+                    #     pass
+                    # else:
+                    #     surface.blit(self.game.assets[tile['type']][tile['variant']], (tile['pos'][0] * self.tile_size - offset[0], tile['pos'][1] * self.tile_size - offset[1]))
+                    if tile['type'] == 'spawners' and tile['variant'] == 2: # if displaying boss, render with offset bc boss = weird
+                        surface.blit(self.game.assets[tile['type']][tile['variant']], (x * self.tile_size - offset[0] - 3, y * self.tile_size - offset[1] - 4))
                     else:
-                        surface.blit(self.game.assets[tile['type']][tile['variant']], (tile['pos'][0] * self.tile_size - offset[0], tile['pos'][1] * self.tile_size - offset[1]))
+                        surface.blit(self.game.assets[tile['type']][tile['variant']], (x * self.tile_size - offset[0], y * self.tile_size - offset[1]))
         # Older on-grid rendering (less efficient for large amounts of tiles)
         #  for loc in self.tile_map:
         #     tile = self.tile_map[loc]

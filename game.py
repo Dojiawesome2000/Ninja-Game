@@ -94,7 +94,7 @@ class Game:
 
         self.map_name = 'test3.json' # or map.json
         # self.map_id = 0
-        self.testing = False
+        self.testing = True
 
         self.level = 0 if not self.testing else self.map_name
         try:
