@@ -34,7 +34,7 @@ class Editor:
         self.movement = [False, False, False, False]
         
         self.tilemap = Tilemap(self, tile_size=16)
-        self.tilemap.load('test3.json') # default is: 'map.json'
+        self.tilemap.load('map.json') # default is: 'map.json'
 
         # try:
         #     self.tilemap.load("map.json")

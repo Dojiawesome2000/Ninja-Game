@@ -210,10 +210,12 @@ class Boss(Enemy):
         super().update(tilemap, movement=movement)
 
         # Animation logic (if move, then animate, else no)
-        if movement[0] != 0:
-            self.set_action('run')
-        else:
-            self.set_action('idle')
+        # if movement[0] != 0:
+        #     self.set_action('run')
+        #     print("boss should be running")
+        # else:
+        #     self.set_action('idle')
+        #     print(f"Current boss action: {self.action}")
     
     def render(self, surface, offset=(0, 0)):
         return super().render(surface, offset) # currently same as enemy, but will be changed later
