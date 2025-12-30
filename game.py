@@ -92,7 +92,7 @@ class Game:
         self.transition = -30
         self.dead_timer = 0
 
-        self.map_name = 'test3.json' # or map.json
+        self.map_name = 'test_boss.json' # or map.json
         # self.map_id = 0
         self.testing = True
 
