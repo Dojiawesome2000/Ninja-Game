@@ -235,14 +235,14 @@ class Player(PhysicsEntity):
 
         self.speed_multiplier = 1.5
 
-        self.hpbar_render_points = [
-            (10, self.game.display.get_height() - 20),
-            (10 + self.hp, self.game.display.get_height() - 20),
-            (10 + self.hp, self.game.display.get_height() - 10),
-            (10, self.game.display.get_height() - 10),
-        ]
+        # self.hpbar_render_points = [
+        #     (10, self.game.display.get_height() - 20),
+        #     (10 + self.hp, self.game.display.get_height() - 20),
+        #     (10 + self.hp, self.game.display.get_height() - 10),
+        #     (10, self.game.display.get_height() - 10),
+        # ]
 
-        self.hpbar_bg_rect_coords = (9, self.game.display.get_height() - 21, self.max_hp + 2, 12) # (x, y, width, height)
+        # self.hpbar_bg_rect_coords = (9, self.game.display.get_height() - 21, self.max_hp + 2, 12) # (x, y, width, height)
 
     def update(self, tilemap, movement=(0, 0)):
         super().update(tilemap, movement)
