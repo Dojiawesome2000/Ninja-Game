@@ -183,7 +183,7 @@ class Boss(Enemy):
     def __init__(self, game, pos, size):
         super().__init__(game, pos, size, e_type='boss', max_hp=500, dmg=10)
 
-        self.anim_offset = (-5, -5)
+        self.anim_offset = (-2, -3)
         
     def update(self, tilemap, movement=(0, 0)):
         if self.walking:
@@ -206,6 +206,11 @@ class Boss(Enemy):
             self.set_action('run')
         else:
             self.set_action('idle')
+
+        # override animation
+        dist = pygame.math.Vector2(self.game.player.rect().center).distance_to(pygame.math.Vector2(self.rect().center))
+        if dist < 100:
+            self.set_action('idle_combat')
 
         if abs(self.game.player.dashing) >= 50: # if player is dashing
             if self.rect().colliderect(self.game.player.rect()): # and enemy collides with player

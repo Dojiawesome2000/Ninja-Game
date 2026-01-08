@@ -44,10 +44,11 @@ class Game:
             'player/run': Animation(load_images('entities/player/run'), img_dur=4),
             'player/slide': Animation(load_images('entities/player/slide')),
             'player/wall_slide': Animation(load_images('entities/player/wall_slide')),
-            'boss/idle':Animation(load_images('entities/boss/idle'), img_dur=6),
+            'boss/idle': Animation(load_images('entities/boss/idle'), img_dur=6),
+            'boss/idle_combat': Animation(load_images('entities/boss/idle_combat'), img_dur=6),
             'boss/run':Animation(load_images('entities/boss/run')),
-            'boss/jump':Animation(load_images('entities/boss/jump')),
-            'boss/slash':Animation(load_images('entities/boss/slash')),
+            'boss/jump': Animation(load_images('entities/boss/jump')),
+            'boss/slash': Animation(load_images('entities/boss/slash')),
             'particles/leaf': Animation(load_images('particles/leaf'), img_dur=20, loop=False),
             'particles/particle': Animation(load_images('particles/particle'), img_dur=6, loop=False),
             'gun': load_image('gun.png'),
@@ -135,7 +136,7 @@ class Game:
                 self.enemies.append(enemy)
                 self.healthbars.append(HealthBar(self, enemy, color=(255, 0, 0), shrink_factor=5))
             else: #spawner is boss
-                boss = Boss(self, spawner['pos'], size=(8, 15))
+                boss = Boss(self, spawner['pos'], size=(16, 17))
                 self.enemies.append(boss)
                 self.healthbars.append(HealthBar(self, boss, color=(255, 0, 0), shrink_factor=5))
         
