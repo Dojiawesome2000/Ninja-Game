@@ -95,7 +95,7 @@ class Game:
 
         self.map_name = 'test_boss.json' # or map.json
         # self.map_id = 0
-        self.testing = True
+        self.testing = True # set to True to test maps without changing map files, False if just playing the game
 
         self.level = 0 if not self.testing else self.map_name
         try:
@@ -138,7 +138,7 @@ class Game:
             else: #spawner is boss
                 boss = Boss(self, spawner['pos'], size=(16, 17))
                 self.enemies.append(boss)
-                self.healthbars.append(HealthBar(self, boss, color=(255, 0, 0), shrink_factor=5))
+                self.healthbars.append(HealthBar(self, boss, color=(255, 0, 0), shrink_factor=5, size_multiplier=2))
         
         self.projectiles = []
         self.particles = []
