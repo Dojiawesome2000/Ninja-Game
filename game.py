@@ -30,6 +30,7 @@ class Game:
         self.fps = 60 # frame rate (frames per second)
 
         self.assets = {
+            # tiles
             'decor': load_images('tiles/decor'),
             'grass': load_images('tiles/grass'),
             'large_decor': load_images('tiles/large_decor'),
@@ -37,20 +38,34 @@ class Game:
             'player': load_image('entities/player.png'),
             'background': load_image('background.png'),
             'clouds': load_images('clouds'),
+
+            # enemy
             'enemy/idle': Animation(load_images('entities/enemy/idle'), img_dur=6),
             'enemy/run': Animation(load_images('entities/enemy/run'), img_dur=4),
+
+            # player
             'player/idle': Animation(load_images('entities/player/idle'), img_dur=6),
             'player/jump': Animation(load_images('entities/player/jump')),
             'player/run': Animation(load_images('entities/player/run'), img_dur=4),
             'player/slide': Animation(load_images('entities/player/slide')),
             'player/wall_slide': Animation(load_images('entities/player/wall_slide')),
+
+            # boss
             'boss/idle': Animation(load_images('entities/boss/idle'), img_dur=6),
             'boss/idle_combat': Animation(load_images('entities/boss/idle_combat'), img_dur=6),
+            'boss/unsheath_sword': Animation(load_images('entities/boss/unsheath_sword'), img_dur=5),
+            'boss/sheath_sword': Animation(load_images('entities/boss/sheath_sword'), img_dur=5),
+            'boss/run_combat': Animation(load_images('entities/boss/run_combat'), img_dur=4),
+            'boss/slash': Animation(load_images('entities/boss/slash'), img_dur=4, loop=False),
             'boss/run':Animation(load_images('entities/boss/run')),
             'boss/jump': Animation(load_images('entities/boss/jump')),
             'boss/slash': Animation(load_images('entities/boss/slash')),
+
+            # particles
             'particles/leaf': Animation(load_images('particles/leaf'), img_dur=20, loop=False),
             'particles/particle': Animation(load_images('particles/particle'), img_dur=6, loop=False),
+
+            # other
             'gun': load_image('gun.png'),
             'gun2': pygame.transform.flip(pygame.transform.scale(load_image('gun2.png'), (8, 4)), True, False),
             'projectile': load_image('projectile.png'),

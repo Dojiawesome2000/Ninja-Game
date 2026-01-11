@@ -184,9 +184,11 @@ class Boss(Enemy):
         super().__init__(game, pos, size, e_type='boss', max_hp=500, dmg=10)
 
         self.anim_offset = (-2, -3)
+        self.in_combat = False
+        self.transition_timer = 0
         
     def update(self, tilemap, movement=(0, 0)):
-        if self.walking:
+        if self.walking and self.transition_timer <= 0:
             if tilemap.solid_check((self.rect().centerx + (-7 if self.flip else 7), self.pos[1] + 23)):
                 if (self.collisions['right'] or self.collisions['left']): # If hit wall
                     self.flip = not self.flip
@@ -202,15 +204,42 @@ class Boss(Enemy):
         self.physics_only_update(tilemap, movement=movement)
 
         # Animation logic (if move, then animate, else no)
-        if movement[0] != 0:
-            self.set_action('run')
-        else:
-            self.set_action('idle')
+        # if movement[0] != 0:
+        #     self.set_action('run')
+        # elif not self.in_combat:
+        #     self.set_action('idle')
+        # else:
+        #     self.set_action('idle_combat')
 
-        # override animation
+        if self.transition_timer <= 0:
+            if not self.in_combat:
+                if movement[0] != 0:
+                    self.set_action('run')
+                else:
+                    self.set_action('idle')
+            else:
+                if movement[0] != 0:
+                    self.set_action('run_combat')
+                else:
+                    self.set_action('idle_combat')
+        else:
+            self.transition_timer -= 1
+            self.set_action('unsheath_sword')
+            # if self.in_combat:
+            #     self.set_action('unsheath_sword') #for testing
+            # else:
+            #     self.set_action('sheath_sword')
+
+        # override animation / trigger for combat mode (may be changed later)
         dist = pygame.math.Vector2(self.game.player.rect().center).distance_to(pygame.math.Vector2(self.rect().center))
         if dist < 100:
-            self.set_action('idle_combat')
+            if self.transition_timer <= 0 and not self.in_combat:
+                # print(self.transition_timer)
+                self.transition_timer = self.game.assets['boss/unsheath_sword'].len_imgs * self.game.assets['boss/unsheath_sword'].img_dur
+            # print(self.transition_timer)
+            self.set_combat(True)
+        else:
+            self.set_combat(False)
 
         if abs(self.game.player.dashing) >= 50: # if player is dashing
             if self.rect().colliderect(self.game.player.rect()): # and enemy collides with player
@@ -224,6 +253,18 @@ class Boss(Enemy):
                     self.game.sparks.append(Spark(self.rect().center, angle, 2 + random.random()))
                     self.game.particles.append(Particle(self.game, 'particle', self.rect().center, velocity=[math.cos(angle + math.pi) * speed * 0.5, math.sin(angle + math.pi) * speed], frame=random.randint(0, 7)))
                 # always show hit/slash mark
+
+    def set_combat(self, in_combat:bool):
+        self.transition() if (in_combat and not self.in_combat) else None
+        self.in_combat = in_combat
+
+    def transition(self):
+        """
+        Transitions boss from sheathed animation to unsheathed animation based on self.in_combat
+        
+        :param self: if ykyk
+        """
+        self.set_action("unsheath_sword")
     
     def render(self, surface, offset=(0, 0)):
         return super().render(surface, offset) # currently same as enemy, but will be changed later
