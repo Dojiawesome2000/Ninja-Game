@@ -6,6 +6,7 @@ import pygame
 import random
 import math
 
+
 from scripts.entities import PhysicsEntity, Player, Enemy, Boss
 from scripts.utils import load_image, load_images, Animation
 from scripts.tilemap import Tilemap
@@ -101,7 +102,7 @@ class Game:
         
         self.tilemap = Tilemap(self, tile_size=16)
 
-        self.screenshake = 0
+        self.screenshake = 1
             
         # weird vars bc need to be initialized before self.run()
         self.enemies = []
