@@ -22,7 +22,7 @@ class Game:
         pygame.init()
 
         pygame.display.set_caption("Ninja Platformer Test Game")
-        self.screen = pygame.display.set_mode((640, 480)) # the window for the game
+        self.screen = pygame.display.set_mode((640,480))#(1080, 810))#(640, 480)) # the window for the game
         self.display = pygame.Surface((320, 240), pygame.SRCALPHA) # stuff to draw on
         self.display_2 = pygame.Surface((320, 240))
 
@@ -60,7 +60,6 @@ class Game:
             'boss/slash': Animation(load_images('entities/boss/slash'), img_dur=4, loop=False),
             'boss/run':Animation(load_images('entities/boss/run')),
             'boss/jump': Animation(load_images('entities/boss/jump')),
-            'boss/slash': Animation(load_images('entities/boss/slash')),
 
             # particles
             'particles/leaf': Animation(load_images('particles/leaf'), img_dur=20, loop=False),
@@ -141,7 +140,15 @@ class Game:
         for tree in self.tilemap.extract([('large_decor', 2)], keep=True):
             self.leaf_spawners.append(pygame.Rect(4 + tree['pos'][0], 4 + tree['pos'][1], 23, 13))
 
-        # self.enemies = []
+        # self.enemies = [] # clear enemies from last death
+        if self.enemies: # if is full
+            for enemy in self.enemies: # includes bosses
+                enemy.pos = enemy.spawn_pos
+                if enemy.type == 'enemy':
+                    self.healthbars.append(HealthBar(self, enemy, color=(255, 0, 0), shrink_factor=5))
+                elif enemy.type == 'boss':
+                    self.healthbars.append(HealthBar(self, enemy, color=(255, 0, 0), shrink_factor=5, size_multiplier=2))
+                
         for spawner in self.tilemap.extract([('spawners', 0), ('spawners', 1), ('spawners', 2)]):
             if spawner['variant'] == 0: # spawner is for player
                 self.player.pos = spawner['pos']
@@ -392,6 +399,12 @@ class Game:
             self.screen.blit(pygame.transform.scale(self.display_2, self.screen.get_size()), screenshake_offset)
             pygame.display.update()
             self.clock.tick(self.fps)
+            # for enemy in self.enemies:
+            #     print("boss pos: ", enemy.pos)
+            #     print("hitbox pos: ", enemy.visible_hitbox.pos)
+            # print("player pos: ", self.player.pos)
+            
+                
 
 
 Game().run() # begins running the game

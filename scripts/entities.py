@@ -11,6 +11,7 @@ class PhysicsEntity:
         self.game = game
         self.type = entity_type
         self.pos = list(pos)
+        self.spawn_pos = self.pos
         self.size = size
         self.max_hp = max_hp
         self.hp = max_hp
@@ -180,27 +181,49 @@ class Enemy(PhysicsEntity):
                 surface.blit(self.game.assets['gun2'], (self.rect().centerx + self.gun_dist - offset[0], self.rect().centery - offset[1]))
 
 class Boss(Enemy):
+    # Ranges are in pixels
+    ATTACK_RANGE = 25
+    DETECTION_RANGE = 100
+    
     def __init__(self, game, pos, size):
         super().__init__(game, pos, size, e_type='boss', max_hp=500, dmg=10)
 
         self.anim_offset = (-2, -3)
         self.in_combat = False
         self.transition_timer = 0
+        self.sword_hitbox = Hitbox(game, self, width=20, height=20, color=(255, 0, 0, 50))
         
     def update(self, tilemap, movement=(0, 0)):
-        if self.walking and self.transition_timer <= 0:
-            if tilemap.solid_check((self.rect().centerx + (-7 if self.flip else 7), self.pos[1] + 23)):
-                if (self.collisions['right'] or self.collisions['left']): # If hit wall
-                    self.flip = not self.flip
+        if not self.in_combat: # move normally
+            if self.walking and self.transition_timer <= 0:
+                if tilemap.solid_check((self.rect().centerx + (-7 if self.flip else 7), self.pos[1] + 23)):
+                    if (self.collisions['right'] or self.collisions['left']): # If hit wall
+                        self.flip = not self.flip
+                    else:
+                        movement = (movement[0] - 0.5 if self.flip else 0.5, movement[1])
                 else:
-                    movement = (movement[0] - 0.5 if self.flip else 0.5, movement[1])
-            else:
-                self.flip = not self.flip
-            self.walking = max(0, self.walking - 1)
-            # no shooting logic for boss
-        elif random.random() < 0.01:
-            self.walking = random.randint(30, 120)
-
+                    self.flip = not self.flip
+                self.walking = max(0, self.walking - 1)
+                # no shooting logic for boss
+            elif random.random() < 0.01:
+                self.walking = random.randint(30, 120)
+        
+        else: # ATTACK mode :roar:
+            # Flip based on player's x position relative to boss IF IN COMBAT
+            self.flip = self.game.player.rect().centerx < self.rect().centerx
+            movement = (movement[0]-.5 if self.flip else 0.5, movement[1]) # always move unless...
+            # stop moving if hit wall, not done transitioning, or close enough to player
+            # -------------------MORE TELEMETRY-------------------
+            # print("can hit player?: ", self.can_hit_player())
+            # print("Hit wall?: ", self.collisions['right'] or self.collisions['left'])
+            # print("IN trnasition: ", self.transition_timer > 0)
+            if self.collisions['right'] or self.collisions['left'] or self.transition_timer > 0 or self.can_hit_player():
+                movement = (0, movement[1])
+                # NOTE it would be cool to add a jump mechanic here (getting over obtacles?)
+                
+        #telemetry
+        # print("self.centery - player.centery", abs(self.rect().centery - self.game.player.rect().centery))
+            
         self.physics_only_update(tilemap, movement=movement)
 
         # Animation logic (if move, then animate, else no)
@@ -231,8 +254,8 @@ class Boss(Enemy):
             #     self.set_action('sheath_sword')
 
         # override animation / trigger for combat mode (may be changed later)
-        dist = pygame.math.Vector2(self.game.player.rect().center).distance_to(pygame.math.Vector2(self.rect().center))
-        if dist < 100:
+        dist = self.get_dist_to_player()
+        if dist < self.DETECTION_RANGE:
             if self.transition_timer <= 0 and not self.in_combat:
                 # print(self.transition_timer)
                 self.transition_timer = self.game.assets['boss/unsheath_sword'].len_imgs * self.game.assets['boss/unsheath_sword'].img_dur
@@ -253,6 +276,32 @@ class Boss(Enemy):
                     self.game.sparks.append(Spark(self.rect().center, angle, 2 + random.random()))
                     self.game.particles.append(Particle(self.game, 'particle', self.rect().center, velocity=[math.cos(angle + math.pi) * speed * 0.5, math.sin(angle + math.pi) * speed], frame=random.randint(0, 7)))
                 # always show hit/slash mark
+                
+        # always show hitbox
+        self.sword_hitbox.update()
+                
+    def get_closest_player(self):
+        """currently not needed/NO IMPLEMENTATION
+        """
+        pass
+    
+    def get_dist_to_player(self):
+        return pygame.math.Vector2(self.game.player.rect().center).distance_to(pygame.math.Vector2(self.rect().center))
+    
+    def can_hit_player(self, attack_range:int=ATTACK_RANGE) -> bool: # assume like 10 pixels away to start slash
+        dist = self.get_dist_to_player()
+        # print("dist: ", dist)
+        return (dist < attack_range) and (abs(self.rect().centery - self.game.player.rect().centery) < attack_range/2) # not to high, not too low :D 
+
+    # TODO
+    def slash(self):
+        """
+        Sets action to slash and updates transition timer
+        """
+        if self.transition_timer <= 0:
+            self.set_action('slash')
+            self.transition_timer = self.game.assets['boss/slash'].len_imgs * self.game.assets['boss/slash'].img_dur
+        pass
 
     def set_combat(self, in_combat:bool):
         self.transition() if (in_combat and not self.in_combat) else None
@@ -265,10 +314,11 @@ class Boss(Enemy):
         :param self: if ykyk
         """
         self.set_action("unsheath_sword")
-    
+        
     def render(self, surface, offset=(0, 0)):
+        self.sword_hitbox.render(surface, offset=(offset[0] + (10 if self.flip else -10), offset[1]))
         return super().render(surface, offset) # currently same as enemy, but will be changed later
-        # pretty much make the gun different
+        # pretty much make the gun/weapon different
 
 class Player(PhysicsEntity):
     def __init__(self, game, pos, size):
@@ -387,3 +437,26 @@ class Player(PhysicsEntity):
                 self.dashing = -60
             else:
                 self.dashing = 60
+                
+class Hitbox:
+    """
+    A generic hitbox class for extra/extended hitboxes (like for swords :D)
+    """
+    
+    def __init__(self, game, entity:PhysicsEntity, width:float=5, height:float=5, color:tuple=(255, 0, 0, 128)):
+        self.game = game
+        self.entity = entity
+        self.center = (self.entity.rect().centerx, self.entity.rect().centery) # TODO add x offset
+        self.size = [width, height]
+        self.color = color
+        
+    def rect(self, offset=(0,0)):
+        'returns pygame.Rect() generic hitbox'
+        return pygame.Rect(self.center[0] - self.size[0]/2 - offset[0], self.center[1] - self.size[1]/2 - offset[1], self.size[0], self.size[1]) # (x, y, width, height)
+    
+    def update(self):
+        self.center = (self.entity.rect().centerx, self.entity.rect().centery)
+    
+    def render(self, surface, offset=(0, 0)):
+        pygame.draw.rect(surface, self.color, self.rect(offset), width=0)
+    
