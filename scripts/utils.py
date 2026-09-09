@@ -8,11 +8,11 @@ def load_image(path):
     # note, there is a base image path for this function which is "data/images/"
     # print("BASE_IMG_PATH + path attempted: ", BASE_IMG_PATH + path)
     try:
-        img = pygame.image.load(BASE_IMG_PATH + path).convert_alpha() #note: .convert() optimizes performance of images (why? idk)
+        img = pygame.image.load(BASE_IMG_PATH + path).convert() #note: .convert() optimizes performance of images (why? idk)
         img.set_colorkey((0, 0, 0)) # sets black pixels of img to transparent
         return img
     except pygame.error as e:
-        print(f"")
+        print(f"Bad image format, {e}")
 
 def load_images(path):
     images = []

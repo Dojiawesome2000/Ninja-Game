@@ -233,6 +233,12 @@ class Game:
 
             # Update/Render Enemies before player
             for enemy in self.enemies.copy():
+                if enemy.type == 'boss':
+                    if enemy.show_hitbox and self.player.rect().colliderect(enemy.sword_hitbox.rect()): # if player hit
+                        enemy.slash_timer = 0
+                        self.player.hp -= enemy.dmg
+                        print(f"enemy {enemy} hit player dealing {enemy.dmg} dmg")
+                        self.player.process_hit()
                 kill = True if (enemy.hp <= 0) else False
                 enemy.update(self.tilemap, (0,  0))
                 enemy.render(self.display, offset=render_scroll)
@@ -276,17 +282,8 @@ class Game:
                             (10 + self.player.hp, self.display.get_height() - 10),
                             (10, self.display.get_height() - 10),
                         ]
-                        if self.player.hp <= 0:
-                            self.sfx['death'].play()
-                            self.dead_timer += 1
-                            spark_amount = 30
-                        else:
-                            spark_amount = random.randint(5, 10)
-                        for i in range(spark_amount): # 30 SPARKS??? ... yes
-                                angle = random.random() * math.pi * 2
-                                speed = random.random() * 5
-                                self.sparks.append(Spark(self.player.rect().center, angle, 2 + random.random()))
-                                self.particles.append(Particle(self, 'particle', self.player.rect().center, velocity=[math.cos(angle + math.pi) * speed * 0.5, math.sin(angle + math.pi) * speed], frame=random.randint(0, 7)))
+                        
+                        self.player.process_hit()
 
             # Update/Render Sparks
             for spark in self.sparks.copy():

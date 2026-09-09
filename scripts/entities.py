@@ -32,7 +32,7 @@ class PhysicsEntity:
         self.flip = False
         self.set_action('idle')
 
-    def rect(self):
+    def rect(self, offset=(0,0)):
         'returns pygame.Rect() hitbox of entity'
         return pygame.Rect(self.pos[0], self.pos[1], self.size[0], self.size[1])
     
@@ -182,8 +182,9 @@ class Enemy(PhysicsEntity):
 
 class Boss(Enemy):
     # Ranges are in pixels
-    ATTACK_RANGE = 25
+    ATTACK_RANGE = 20
     DETECTION_RANGE = 100
+    SLASH_COOLDOWN = 75
     
     def __init__(self, game, pos, size):
         super().__init__(game, pos, size, e_type='boss', max_hp=500, dmg=10)
@@ -191,6 +192,9 @@ class Boss(Enemy):
         self.anim_offset = (-2, -3)
         self.in_combat = False
         self.transition_timer = 0
+        self.slashing_timer = 0
+        self.slash_cooldown = 0
+        self.show_hitbox = self.slashing_timer > 0
         self.sword_hitbox = Hitbox(game, self, width=20, height=20, color=(255, 0, 0, 50))
         
     def update(self, tilemap, movement=(0, 0)):
@@ -241,10 +245,16 @@ class Boss(Enemy):
                 else:
                     self.set_action('idle')
             else:
-                if movement[0] != 0:
-                    self.set_action('run_combat')
+                if self.slashing_timer <= 0:
+                    if movement[0] != 0:
+                        self.set_action('run_combat')
+                    else:
+                        self.set_action('idle_combat')
                 else:
-                    self.set_action('idle_combat')
+                    self.slashing_timer -= 1
+                    self.set_action('slash')
+                    if self.slashing_timer == 0:
+                        self.slash_cooldown = self.SLASH_COOLDOWN
         else:
             self.transition_timer -= 1
             self.set_action('unsheath_sword')
@@ -252,6 +262,10 @@ class Boss(Enemy):
             #     self.set_action('unsheath_sword') #for testing
             # else:
             #     self.set_action('sheath_sword')
+            
+        # always lower slash_cooldown and update show_hitbox #TODO optimize/code better 😭
+        self.slash_cooldown -= 1
+        self.show_hitbox = self.slashing_timer > 0
 
         # override animation / trigger for combat mode (may be changed later)
         dist = self.get_dist_to_player()
@@ -261,8 +275,12 @@ class Boss(Enemy):
                 self.transition_timer = self.game.assets['boss/unsheath_sword'].len_imgs * self.game.assets['boss/unsheath_sword'].img_dur
             # print(self.transition_timer)
             self.set_combat(True)
+            if self.can_hit_player(): # also slash
+                self.slash()
         else:
             self.set_combat(False)
+            
+        # override animation / always follow through sword slash
 
         if abs(self.game.player.dashing) >= 50: # if player is dashing
             if self.rect().colliderect(self.game.player.rect()): # and enemy collides with player
@@ -296,12 +314,11 @@ class Boss(Enemy):
     # TODO
     def slash(self):
         """
-        Sets action to slash and updates transition timer
+        Sets action to slash and updates slashing timer
         """
-        if self.transition_timer <= 0:
+        if self.slashing_timer <= 0 and self.slash_cooldown <= 0:
             self.set_action('slash')
-            self.transition_timer = self.game.assets['boss/slash'].len_imgs * self.game.assets['boss/slash'].img_dur
-        pass
+            self.slashing_timer = self.game.assets['boss/slash'].len_imgs * self.game.assets['boss/slash'].img_dur
 
     def set_combat(self, in_combat:bool):
         self.transition() if (in_combat and not self.in_combat) else None
@@ -316,7 +333,10 @@ class Boss(Enemy):
         self.set_action("unsheath_sword")
         
     def render(self, surface, offset=(0, 0)):
-        self.sword_hitbox.render(surface, offset=(offset[0] + (10 if self.flip else -10), offset[1]))
+        if self.show_hitbox:
+            self.sword_hitbox.render(surface, offset=(offset[0] + (10 if self.flip else -10), offset[1]))
+            
+        pygame.draw.rect(surface, (20, 40, 0, 50), self.sword_hitbox.rect())
         return super().render(surface, offset) # currently same as enemy, but will be changed later
         # pretty much make the gun/weapon different
 
@@ -403,6 +423,7 @@ class Player(PhysicsEntity):
     def render(self, surface, offset=(0,0)):
         # if you're a player and dashing, you become invisible (if you aren't dashing, you render)
         if abs(self.dashing) <= 50:
+            pygame.draw.rect(surface, (50, 50, 50, 50), self.rect())
             super().render(surface=surface, offset=offset)
 
     # def render_hp_bar(self, surface, offset=(0,0)):
@@ -437,6 +458,32 @@ class Player(PhysicsEntity):
                 self.dashing = -60
             else:
                 self.dashing = 60
+                
+    def die(self):
+        self.game.sfx['death'].play()
+        self.game.dead_timer += 1
+        
+    def get_hit(self, spark_amount:int):
+        """Adds sparks around character showing that it was hit
+
+        Args:
+            spark_amount (_int_): amount of sparks around character when hit
+        """
+        for _ in range(spark_amount): # 30 SPARKS??? ... yes
+            angle = random.random() * math.pi * 2
+            speed = random.random() * 5
+            self.game.sparks.append(Spark(self.rect().center, angle, 2 + random.random()))
+            self.game.particles.append(Particle(self.game, 'particle', self.rect().center, velocity=[math.cos(angle + math.pi) * speed * 0.5, math.sin(angle + math.pi) * speed], frame=random.randint(0, 7)))
+            
+    def process_hit(self):
+        """Call this after you know player gets hit this will check if a player dies and the add sparks as needed
+        """
+        if self.hp <= 0:
+            self.die()
+            spark_amount = 30
+        else:
+            spark_amount = random.randint(5, 10)
+        self.get_hit(spark_amount=spark_amount)
                 
 class Hitbox:
     """
