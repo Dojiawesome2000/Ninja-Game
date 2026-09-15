@@ -34,7 +34,7 @@ class PhysicsEntity:
 
     def rect(self, offset=(0,0)):
         'returns pygame.Rect() hitbox of entity'
-        return pygame.Rect(self.pos[0], self.pos[1], self.size[0], self.size[1])
+        return pygame.Rect(self.pos[0]-offset[0], self.pos[1], self.size[0], self.size[1])
     
     def set_action(self, action):
         if action != self.action:
@@ -106,6 +106,8 @@ class PhysicsEntity:
 
 
 class Enemy(PhysicsEntity):
+    HIT_COOLDOWN = 50
+    
     def __init__(self, game, pos, size, e_type = 'enemy', max_hp=75, dmg=25):
         super().__init__(game, e_type, pos, size, max_hp=max_hp, dmg=dmg)
         
@@ -116,6 +118,8 @@ class Enemy(PhysicsEntity):
         self.gun_dist = 4 # gun distance away from body (for display purposes)
 
         self.projectile_speed = 2
+        
+        self.hit_cooldown = 0
 
     def update(self, tilemap, movement=(0, 0)):
         if self.walking:
@@ -152,10 +156,22 @@ class Enemy(PhysicsEntity):
             self.set_action('run')
         else:
             self.set_action('idle')
+            
+        self.hit_by_player_update(self)
+                
+    def physics_only_update(self, tilemap, movement=(0, 0)):
+        super().update(tilemap, movement=movement)
+        
+    def hit_by_player_update(self):
+        # hit_cooldown reset
+        if self.hit_cooldown > 0:
+            self.hit_cooldown-=1
 
         if abs(self.game.player.dashing) >= 50: # if player is dashing
-            if self.rect().colliderect(self.game.player.rect()): # and enemy collides with player
+            if self.rect().colliderect(self.game.player.rect()) and self.hit_cooldown <= 0: # and enemy collides with player and wasn't hit in the last few frames
+                # print(f"Player dealt {self.game.player.dmg} dmg to enemy of type {self.type}")
                 self.hp -= self.game.player.dmg # take dmg from player
+                self.hit_cooldown = self.HIT_COOLDOWN # STOP
                 self.game.screenshake = max(16, self.game.screenshake) # add screenshake
                 self.game.sfx['slash3'].play()
                 spark_amount = 30 if (self.hp <= 0) else random.randint(4, 7)
@@ -164,10 +180,7 @@ class Enemy(PhysicsEntity):
                     speed = random.random() * 5
                     self.game.sparks.append(Spark(self.rect().center, angle, 2 + random.random()))
                     self.game.particles.append(Particle(self.game, 'particle', self.rect().center, velocity=[math.cos(angle + math.pi) * speed * 0.5, math.sin(angle + math.pi) * speed], frame=random.randint(0, 7)))
-                # always show hit/slash mark
-                
-    def physics_only_update(self, tilemap, movement=(0, 0)):
-        super().update(tilemap, movement=movement)
+                # always show hit/slash marks
 
     def render(self, surface, offset=(0,0)):
         super().render(surface=surface, offset=offset)
@@ -184,7 +197,7 @@ class Boss(Enemy):
     # Ranges are in pixels
     ATTACK_RANGE = 20
     DETECTION_RANGE = 100
-    SLASH_COOLDOWN = 75
+    SLASH_COOLDOWN = 50
     
     def __init__(self, game, pos, size):
         super().__init__(game, pos, size, e_type='boss', max_hp=500, dmg=10)
@@ -265,7 +278,7 @@ class Boss(Enemy):
             
         # always lower slash_cooldown and update show_hitbox #TODO optimize/code better 😭
         self.slash_cooldown -= 1
-        self.show_hitbox = self.slashing_timer > 0
+        self.show_hitbox = self.slashing_timer > 0 and self.slash_cooldown <= 0
 
         # override animation / trigger for combat mode (may be changed later)
         dist = self.get_dist_to_player()
@@ -282,18 +295,7 @@ class Boss(Enemy):
             
         # override animation / always follow through sword slash
 
-        if abs(self.game.player.dashing) >= 50: # if player is dashing
-            if self.rect().colliderect(self.game.player.rect()): # and enemy collides with player
-                self.hp -= self.game.player.dmg # take dmg from player
-                self.game.screenshake = max(16, self.game.screenshake) # add screenshake
-                self.game.sfx['slash3'].play()
-                spark_amount = 30 if (self.hp <= 0) else random.randint(4, 7)
-                for i in range(spark_amount): # EFFECTS :D ----> 30 SPARKS??? ... yes
-                    angle = random.random() * math.pi * 2
-                    speed = random.random() * 5
-                    self.game.sparks.append(Spark(self.rect().center, angle, 2 + random.random()))
-                    self.game.particles.append(Particle(self.game, 'particle', self.rect().center, velocity=[math.cos(angle + math.pi) * speed * 0.5, math.sin(angle + math.pi) * speed], frame=random.randint(0, 7)))
-                # always show hit/slash mark
+        self.hit_by_player_update()
                 
         # always show hitbox
         self.sword_hitbox.update()
@@ -336,11 +338,12 @@ class Boss(Enemy):
         if self.show_hitbox:
             self.sword_hitbox.render(surface, offset=(offset[0] + (10 if self.flip else -10), offset[1]))
             
-        pygame.draw.rect(surface, (20, 40, 0, 50), self.sword_hitbox.rect())
+        # pygame.draw.rect(surface, (20, 40, 0, 50), self.sword_hitbox.rect(offset=(offset[0] + (10 if self.flip else -10), offset[1])))
         return super().render(surface, offset) # currently same as enemy, but will be changed later
         # pretty much make the gun/weapon different
 
 class Player(PhysicsEntity):
+    
     def __init__(self, game, pos, size):
         super().__init__(game, 'player', pos, size, max_hp=100, dmg=50)
         self.air_time = 0
@@ -423,7 +426,7 @@ class Player(PhysicsEntity):
     def render(self, surface, offset=(0,0)):
         # if you're a player and dashing, you become invisible (if you aren't dashing, you render)
         if abs(self.dashing) <= 50:
-            pygame.draw.rect(surface, (50, 50, 50, 50), self.rect())
+            # pygame.draw.rect(surface, (50, 50, 50, 50), self.rect())
             super().render(surface=surface, offset=offset)
 
     # def render_hp_bar(self, surface, offset=(0,0)):

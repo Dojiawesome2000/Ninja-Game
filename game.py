@@ -234,10 +234,13 @@ class Game:
             # Update/Render Enemies before player
             for enemy in self.enemies.copy():
                 if enemy.type == 'boss':
-                    if enemy.show_hitbox and self.player.rect().colliderect(enemy.sword_hitbox.rect()): # if player hit
+                    if enemy.show_hitbox and self.player.rect().colliderect(enemy.sword_hitbox.rect(offset=(10 if enemy.flip else -10, 0))) and not self.player.dashing >= 50: # if player hit
+                        # print(f"showhitbox of {enemy.type}: {enemy.show_hitbox}")
                         enemy.slash_timer = 0
+                        enemy.show_hitbox = False
+                        enemy.slash_cooldown = enemy.SLASH_COOLDOWN
                         self.player.hp -= enemy.dmg
-                        print(f"enemy {enemy} hit player dealing {enemy.dmg} dmg")
+                        # print(f"enemy {enemy} hit player dealing {enemy.dmg} dmg")
                         self.player.process_hit()
                 kill = True if (enemy.hp <= 0) else False
                 enemy.update(self.tilemap, (0,  0))
