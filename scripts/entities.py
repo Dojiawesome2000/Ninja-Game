@@ -157,7 +157,7 @@ class Enemy(PhysicsEntity):
         else:
             self.set_action('idle')
             
-        self.hit_by_player_update(self)
+        self.hit_by_player_update()
                 
     def physics_only_update(self, tilemap, movement=(0, 0)):
         super().update(tilemap, movement=movement)
@@ -169,7 +169,7 @@ class Enemy(PhysicsEntity):
 
         if abs(self.game.player.dashing) >= 50: # if player is dashing
             if self.rect().colliderect(self.game.player.rect()) and self.hit_cooldown <= 0: # and enemy collides with player and wasn't hit in the last few frames
-                # print(f"Player dealt {self.game.player.dmg} dmg to enemy of type {self.type}")
+                # print(f"Player dealt {self.game.player.dmg} dmg to enemy of type {self.xtype}")
                 self.hp -= self.game.player.dmg # take dmg from player
                 self.hit_cooldown = self.HIT_COOLDOWN # STOP
                 self.game.screenshake = max(16, self.game.screenshake) # add screenshake
@@ -345,7 +345,7 @@ class Boss(Enemy):
 class Player(PhysicsEntity):
     
     def __init__(self, game, pos, size):
-        super().__init__(game, 'player', pos, size, max_hp=100, dmg=50)
+        super().__init__(game, 'player', pos, size, max_hp=67, dmg=67)
         self.air_time = 0
         self.max_jumps = 2
         self.jumps = self.max_jumps

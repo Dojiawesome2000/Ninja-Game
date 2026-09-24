@@ -110,7 +110,7 @@ class Game:
 
         self.map_name = 'test_boss.json' # or map.json
         # self.map_id = 0
-        self.testing = True # set to True to test maps without changing map files, False if just playing the game
+        self.testing = False # set to True to test maps without changing map files, False if just playing the game
 
         self.level = 0 if not self.testing else self.map_name
         try:
